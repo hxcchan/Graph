@@ -1,15 +1,18 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
-public class AdjMatrix {
+/**
+ * 邻接表
+ * */
+public class AdjList {
     private int V;   // 顶点
     private int E;   // 边
-    private int[][] adj;
+    private List<Integer>[] adj;
 
-    public AdjMatrix(String filename) {
+    public AdjList(String filename) {
         File file = new File(filename);
         try(Scanner scanner = new Scanner(file)) {
             V = scanner.nextInt();
@@ -21,7 +24,11 @@ public class AdjMatrix {
             /**
              * 根据顶点个数创建n * n的邻接矩阵
              * */
-            adj = new int[V][V];
+            adj = new LinkedList[V];
+            for (int i = 0; i < V; i++) {
+                adj[i] = new LinkedList<>();
+            }
+
 
             E = scanner.nextInt();
 
@@ -40,8 +47,8 @@ public class AdjMatrix {
                     throw new IllegalArgumentException("Self Loop is detected.");
                 }
 
-                // 平行边检测
-                if (adj[a][b] == 1) {
+                // 平行边检测 O(V), 导致总时间复杂度O(V * E)
+                if (adj[a].contains(b)) {
                     throw new IllegalArgumentException("Parallel is detected.");
                 }
 
@@ -49,8 +56,8 @@ public class AdjMatrix {
                  * 此处针对无向图进行矩阵赋值，主对角线对称。
                  * O（E） -- Time Complexity
                  * */
-                adj[a][b] = 1;
-                adj[b][a] = 1;
+                adj[a].add(b);
+                adj[b].add(a);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -67,17 +74,18 @@ public class AdjMatrix {
     }
 
     public static void main(String[] args) {
-        AdjMatrix adjMatrix = new AdjMatrix("g.txt");
-        System.out.println(adjMatrix);
+        AdjList adjList = new AdjList("g.txt");
+        System.out.println(adjList);
     }
 
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("V = %d, E = %d\n", V, E));
-        for (int i = 0;i < V; i ++) {
-            for (int j = 0; j < V; j++) {
-                sb.append(String.format("%d ", adj[i][j]));
+        for (int v = 0; v < adj.length; v ++) {
+            sb.append(String.format("%d: ", v));
+            for (int w : adj[v]) {
+                sb.append(String.format("%d ", w));
             }
             sb.append('\n');    //每一行打印结束之后换行
         }
@@ -96,18 +104,12 @@ public class AdjMatrix {
     public boolean hasEdge(int v, int w) {
         validateVertex(v);
         validateVertex(w);
-        return adj[v][w] == 1;
+        return adj[v].contains(w);
     }
 
     public List<Integer> adj(int v) {
         validateVertex(v);
-        List<Integer> res = new ArrayList<>();
-        for (int i = 0; i < V; i++) {
-            if (adj[v][i] == 1) {
-                res.add(i);
-            }
-        }
-        return res;
+        return adj[v];
     }
 
     public int degree(int v) {
